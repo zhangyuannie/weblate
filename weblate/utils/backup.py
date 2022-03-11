@@ -24,7 +24,6 @@ from random import SystemRandom
 from typing import Dict, List
 from urllib.parse import urlparse
 
-import borg
 from django.conf import settings
 
 from weblate.trans.util import get_clean_env
@@ -87,24 +86,8 @@ def tag_cache_dirs():
 
 def run_borg(cmd: List[str], env: Dict[str, str] = None) -> str:
     """Wrapper to execute borgbackup."""
-    with backup_lock():
-        SSH_WRAPPER.create()
-        try:
-            return subprocess.check_output(
-                ["borg", "--rsh", SSH_WRAPPER.filename] + cmd,
-                stderr=subprocess.STDOUT,
-                env=get_clean_env(env),
-                universal_newlines=True,
-            )
-        except OSError as error:
-            report_error()
-            raise BackupError(f"Could not execute borg program: {error}")
-        except subprocess.CalledProcessError as error:
-            add_breadcrumb(
-                category="backup", message="borg output", stdout=error.stdout
-            )
-            report_error()
-            raise BackupError(error.stdout)
+    report_error()
+    raise BackupError("borg not installed")
 
 
 def initialize(location: str, passphrase: str) -> str:

@@ -69,7 +69,6 @@ REQUIRES = [
     "sentry_sdk",
     "Cython",
     "GitPython",
-    "borgbackup",
     "pyparsing",
     "pyahocorasick",
     "python-redis-lock",
