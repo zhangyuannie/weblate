@@ -21,7 +21,6 @@
 import re
 from functools import reduce
 
-import misaka
 from django.db.models import Q
 from django.utils.safestring import mark_safe
 
@@ -40,31 +39,6 @@ def get_mention_users(text):
     )
 
 
-class WeblateHtmlRenderer(misaka.SaferHtmlRenderer):
-    def link(self, content, raw_url, title=""):
-        result = super().link(content, raw_url, title)
-        return result.replace(' href="', ' rel="ugc" target="_blank" href="')
-
-    def check_url(self, url, is_image_src=False):
-        if url.startswith("/user/"):
-            return True
-        return super().check_url(url, is_image_src)
-
-
-RENDERER = WeblateHtmlRenderer()
-MARKDOWN = misaka.Markdown(
-    RENDERER,
-    extensions=(
-        "fenced-code",
-        "tables",
-        "autolink",
-        "space-headers",
-        "strikethrough",
-        "superscript",
-    ),
-)
-
-
 def render_markdown(text):
     users = {u.username.lower(): u for u in get_mention_users(text)}
     parts = MENTION_RE.split(text)
@@ -78,4 +52,4 @@ def render_markdown(text):
                 part, user.get_absolute_url(), user.get_visible_name()
             )
     text = "".join(parts)
-    return mark_safe(MARKDOWN(text))
+    return text
