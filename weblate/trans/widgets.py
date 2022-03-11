@@ -20,8 +20,6 @@
 import os.path
 from typing import Tuple
 
-import cairo
-import gi
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -36,11 +34,6 @@ from weblate.trans.util import sort_unicode
 from weblate.utils.site import get_site_url
 from weblate.utils.stats import GlobalStats
 from weblate.utils.views import get_percent_color
-
-gi.require_version("PangoCairo", "1.0")
-gi.require_version("Pango", "1.0")
-# pylint:disable=wrong-import-position,wrong-import-order
-from gi.repository import Pango, PangoCairo  # noqa:E402,I001 isort:skip
 
 COLOR_DATA = {
     "grey": (0, 0, 0),
@@ -165,48 +158,7 @@ class BitmapWidget(ContentWidget):
 
     def render(self, response):
         """Render widget."""
-        configure_fontconfig()
-        surface = cairo.ImageSurface.create_from_png(self.get_filename())
-        height = surface.get_height()
-        ctx = cairo.Context(surface)
-
-        columns = self.get_columns()
-        column_width = self.get_column_width(surface, columns)
-
-        fonts = self.get_column_fonts()
-
-        for i, column in enumerate(columns):
-            offset = self.offset
-            for row, text in enumerate(column):
-                layout = PangoCairo.create_layout(ctx)
-                layout.set_font_description(fonts[row])
-
-                # Set color and position
-                ctx.move_to(self.column_offset + column_width * i, offset)
-                ctx.set_source_rgb(*COLOR_DATA[self.color])
-
-                # Add text
-                layout.set_markup(text)
-                layout.set_alignment(Pango.Alignment.CENTER)
-                layout.set_width(column_width * Pango.SCALE)
-
-                offset += layout.get_pixel_size().height * self.line_spacing
-
-                # Render to cairo context
-                PangoCairo.show_layout(ctx, layout)
-
-            # Render column separators
-            if self.lines and i > 0:
-                ctx.new_path()
-                ctx.set_source_rgb(*COLOR_DATA[self.color])
-                ctx.set_line_width(0.5)
-                ctx.move_to(column_width * i, self.offset)
-                ctx.line_to(column_width * i, height - self.offset)
-                ctx.stroke()
-
-        self.render_additional(ctx)
-
-        surface.write_to_png(response)
+        raise NotImplementedError()
 
 
 class SVGWidget(ContentWidget):
@@ -307,10 +259,7 @@ class OpenGraphWidget(NormalWidget):
         return 230
 
     def get_column_fonts(self):
-        return [
-            Pango.FontDescription(f"{WIDGET_FONT} {42}"),
-            Pango.FontDescription(f"{WIDGET_FONT} {18}"),
-        ]
+        raise NotImplementedError()
 
     def get_name(self) -> str:
         return self.obj.name
@@ -320,27 +269,7 @@ class OpenGraphWidget(NormalWidget):
         return _("Project %s") % f"<b>{escape(name)}</b>{suffix}"
 
     def render_additional(self, ctx):
-        ctx.move_to(280, 170)
-        layout = PangoCairo.create_layout(ctx)
-        layout.set_font_description(Pango.FontDescription(f"{WIDGET_FONT} {52}"))
-        name = self.get_name()
-        layout.set_markup(self.get_title(name))
-
-        max_width = 1200 - 280
-        while layout.get_size().width / Pango.SCALE > max_width:
-            if " " in name:
-                name = name.rsplit(" ", 1)[0]
-            elif "-" in name:
-                name = name.rsplit("-", 1)[0]
-            elif "_" in name:
-                name = name.rsplit("_", 1)[0]
-            else:
-                name = name[:-1]
-            layout.set_markup(self.get_title(f"{name}", "…"))
-            if not name:
-                break
-
-        PangoCairo.show_layout(ctx, layout)
+        raise NotImplementedError()
 
 
 class SiteOpenGraphWidget(OpenGraphWidget):

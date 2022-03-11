@@ -60,7 +60,6 @@ REQUIRES = [
     "translation-finder",
     "weblate-language-data",
     "html2text",
-    "pycairo",
     "pygobject",
     "diff-match-patch",
     "requests",
